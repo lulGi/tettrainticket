@@ -5,9 +5,12 @@ import com.lul.common.core.exception.BusinessException;
 import com.lul.common.core.exception.ErrorCode;
 import com.lul.user.domain.auth.valueobject.Password;
 import com.lul.user.domain.auth.valueobject.RefreshToken;
+import com.lul.user.domain.auth.valueobject.Role;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 public class Credential extends AggregateRoot<String> {
@@ -15,6 +18,7 @@ public class Credential extends AggregateRoot<String> {
     private String username;
     private Password password;
     private RefreshToken refreshToken;
+    private Set<Role> roles;
     private boolean isActive;
     private LocalDateTime lastLoginAt;
 
@@ -24,6 +28,8 @@ public class Credential extends AggregateRoot<String> {
         this.userProfileId = userProfileId;
         this.username = username;
         this.password = password;
+        this.roles = new HashSet<>();
+        this.roles.add(Role.USER); // Default role
         this.isActive = true;
     }
 
@@ -92,5 +98,20 @@ public class Credential extends AggregateRoot<String> {
     // Domain behavior: Reactivate account
     public void activate() {
         this.isActive = true;
+    }
+
+    // Domain behavior: Add role
+    public void addRole(Role role) {
+        this.roles.add(role);
+    }
+
+    // Domain behavior: Remove role
+    public void removeRole(Role role) {
+        this.roles.remove(role);
+    }
+
+    // Domain behavior: Check if has role
+    public boolean hasRole(Role role) {
+        return this.roles.contains(role);
     }
 }
