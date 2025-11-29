@@ -1,6 +1,6 @@
 package com.lul.user.infrastructure.persistence.entity;
 
-import com.lul.common.core.domain.BaseEntity;
+import com.lul.common.core.infrastructure.persistence.BaseJpaEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,13 +9,16 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
+/**
+ * JPA Entity for user credentials - Infrastructure layer
+ */
 @Entity
 @Table(name = "user_credentials")
 @Getter
 @Setter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class CredentialEntity extends BaseEntity {
+public class CredentialEntity extends BaseJpaEntity {
 
     @Column(name = "user_profile_id", nullable = false, unique = true, length = 36)
     private String userProfileId;

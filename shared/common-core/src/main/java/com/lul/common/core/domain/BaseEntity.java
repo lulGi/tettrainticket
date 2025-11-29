@@ -1,35 +1,33 @@
 package com.lul.common.core.domain;
 
-import jakarta.persistence.*;
 import lombok.Getter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
-@MappedSuperclass
+/**
+ * Pure domain base entity - framework agnostic
+ * No JPA, Spring, or any framework dependencies
+ */
 @Getter
 public abstract class BaseEntity {
 
-    @Id
-    @Column(length = 36)
     protected String id;
-
-    @Version
     protected Long version;
-
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
     protected LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(nullable = false)
     protected LocalDateTime updatedAt;
 
     protected BaseEntity() {
         this.id = UUID.randomUUID().toString();
+        this.version = 0L;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    protected void incrementVersion() {
+        this.version++;
+        this.updatedAt = LocalDateTime.now();
     }
 
     @Override

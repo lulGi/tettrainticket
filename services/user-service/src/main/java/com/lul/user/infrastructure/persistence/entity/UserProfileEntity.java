@@ -1,6 +1,6 @@
 package com.lul.user.infrastructure.persistence.entity;
 
-import com.lul.common.core.domain.BaseEntity;
+import com.lul.common.core.infrastructure.persistence.BaseJpaEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,13 +9,16 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 
+/**
+ * JPA Entity for user profiles - Infrastructure layer
+ */
 @Entity
 @Table(name = "user_profiles")
 @Getter
 @Setter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class UserProfileEntity extends BaseEntity {
+public class UserProfileEntity extends BaseJpaEntity {
 
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
