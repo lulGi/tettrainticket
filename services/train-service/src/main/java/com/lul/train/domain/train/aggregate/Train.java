@@ -1,6 +1,8 @@
 package com.lul.train.domain.train.aggregate;
 
 import com.lul.common.core.domain.AggregateRoot;
+import com.lul.common.core.exception.BusinessException;
+import com.lul.common.core.exception.ErrorCode;
 import com.lul.train.domain.train.valueobject.TrainType;
 import lombok.Getter;
 
@@ -30,16 +32,16 @@ public class Train extends AggregateRoot<String> {
             Integer totalSeats
     ) {
         if (trainNumber == null || trainNumber.trim().isEmpty()) {
-            throw new IllegalArgumentException("Train number cannot be null or empty");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Train number cannot be null or empty");
         }
         if (trainName == null || trainName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Train name cannot be null or empty");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Train name cannot be null or empty");
         }
         if (trainType == null) {
-            throw new IllegalArgumentException("Train type cannot be null");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Train type cannot be null");
         }
         if (totalSeats == null || totalSeats <= 0) {
-            throw new IllegalArgumentException("Total seats must be greater than 0");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Total seats must be greater than 0");
         }
 
         Train train = new Train();
