@@ -18,7 +18,7 @@ public class Route extends AggregateRoot<String> {
      * Private constructor - force use factory method
      */
     private Route(){
-
+        super();
     }
 
     /**

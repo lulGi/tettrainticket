@@ -1,0 +1,666 @@
+{
+	"info": {
+		"_postman_id": "train-service-api-collection",
+		"name": "Train Service API",
+		"description": "Complete API collection for Train Service - Station, Train, Route, Schedule",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Station APIs",
+			"item": [
+				{
+					"name": "Create Station",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"stationCode\": \"HN\",\n  \"name\": \"Hà Nội Station\",\n  \"city\": \"Hà Nội\",\n  \"province\": \"Hà Nội\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/stations",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "stations"]
+						}
+					}
+				},
+				{
+					"name": "Get Station by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/stations/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "stations", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "station-id-here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Station by Code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/stations/code/:code",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "stations", "code", ":code"],
+							"variable": [
+								{
+									"key": "code",
+									"value": "HN"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All Stations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/stations",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "stations"]
+						}
+					}
+				},
+				{
+					"name": "Update Station",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Hà Nội Station (Updated)\",\n  \"city\": \"Hà Nội\",\n  \"province\": \"Hà Nội\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/stations/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "stations", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "station-id-here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Station",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/stations/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "stations", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "station-id-here"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Train APIs",
+			"item": [
+				{
+					"name": "Create Train",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"trainNumber\": \"SE1\",\n  \"trainName\": \"Thống Nhất Express\",\n  \"trainType\": \"EXPRESS\",\n  \"totalSeats\": 500\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/trains",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "trains"]
+						}
+					}
+				},
+				{
+					"name": "Get Train by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/trains/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "trains", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "train-id-here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Train by Number",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/trains/number/:trainNumber",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "trains", "number", ":trainNumber"],
+							"variable": [
+								{
+									"key": "trainNumber",
+									"value": "SE1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All Trains",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/trains",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "trains"]
+						}
+					}
+				},
+				{
+					"name": "Update Train",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"trainName\": \"Thống Nhất Express (Updated)\",\n  \"trainType\": \"HIGH_SPEED\",\n  \"totalSeats\": 600\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/trains/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "trains", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "train-id-here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Train",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/trains/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "trains", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "train-id-here"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Route APIs",
+			"item": [
+				{
+					"name": "Create Route",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"routeCode\": \"HN-SG\",\n  \"originStationId\": \"hanoi-station-id\",\n  \"destinationStationId\": \"saigon-station-id\",\n  \"distance\": 1726,\n  \"estimatedDuration\": 1800\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/routes",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "routes"]
+						}
+					}
+				},
+				{
+					"name": "Get Route by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/routes/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "routes", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "route-id-here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Route by Code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/routes/code/:routeCode",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "routes", "code", ":routeCode"],
+							"variable": [
+								{
+									"key": "routeCode",
+									"value": "HN-SG"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Routes by Origin",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/routes/origin/:originStationId",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "routes", "origin", ":originStationId"],
+							"variable": [
+								{
+									"key": "originStationId",
+									"value": "hanoi-station-id"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Routes by Destination",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/routes/destination/:destinationStationId",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "routes", "destination", ":destinationStationId"],
+							"variable": [
+								{
+									"key": "destinationStationId",
+									"value": "saigon-station-id"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All Routes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/routes",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "routes"]
+						}
+					}
+				},
+				{
+					"name": "Update Route",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"distance\": 1730,\n  \"estimatedDuration\": 1740\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/routes/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "routes", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "route-id-here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Route",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/routes/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "routes", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "route-id-here"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Schedule APIs",
+			"item": [
+				{
+					"name": "Create Schedule",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"trainId\": \"train-id-here\",\n  \"routeId\": \"route-id-here\",\n  \"departureTime\": \"2025-01-20T08:00:00\",\n  \"arrivalTime\": \"2025-01-20T18:00:00\",\n  \"availableSeats\": 500,\n  \"price\": 500000\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/schedules",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "schedules"]
+						}
+					}
+				},
+				{
+					"name": "Get Schedule by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/schedules/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "schedules", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "schedule-id-here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Search Schedules",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/schedules/search?routeId=route-id&startTime=2025-01-20T00:00:00&endTime=2025-01-21T00:00:00",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "schedules", "search"],
+							"query": [
+								{
+									"key": "routeId",
+									"value": "route-id"
+								},
+								{
+									"key": "startTime",
+									"value": "2025-01-20T00:00:00"
+								},
+								{
+									"key": "endTime",
+									"value": "2025-01-21T00:00:00"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Activate Schedule",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/schedules/:id/activate",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "schedules", ":id", "activate"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "schedule-id-here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Cancel Schedule",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/schedules/:id/cancel",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "schedules", ":id", "cancel"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "schedule-id-here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Reserve Seats (WITH LOCK)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"numberOfSeats\": 5\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/schedules/:id/reserve",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "schedules", ":id", "reserve"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "schedule-id-here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Release Seats (Compensation)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"numberOfSeats\": 5\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/schedules/:id/release",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "schedules", ":id", "release"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "schedule-id-here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Schedule",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"departureTime\": \"2025-01-20T09:00:00\",\n  \"arrivalTime\": \"2025-01-20T19:00:00\",\n  \"availableSeats\": 480,\n  \"price\": 550000\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/schedules/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "schedules", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "schedule-id-here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Schedule",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/schedules/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "schedules", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "schedule-id-here"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}
