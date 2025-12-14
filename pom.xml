@@ -38,6 +38,7 @@
         <module>shared/common-kafka</module>
         <module>services/user-service</module>
         <module>services/train-service</module>
+        <module>services/payment-service</module>
     </modules>
 
     <!-- dependencyManagement: Quản lý version -->
