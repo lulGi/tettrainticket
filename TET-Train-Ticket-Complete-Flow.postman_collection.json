@@ -1,0 +1,1035 @@
+{
+	"info": {
+		"_postman_id": "tet-train-complete-flow-2025",
+		"name": "TET Train Ticket - Complete Flow via API Gateway",
+		"description": "Complete API testing collection for TET Train Ticket System\n\n**Architecture:**\n- API Gateway: http://localhost:8080\n- Service Discovery: http://localhost:8761\n- All services accessed through API Gateway\n\n**Services:**\n- User Service (8081)\n- Train Service (8082)\n- Payment Service (8083)\n- Booking Service (8084)\n- Notification Service (8085)\n\n**Complete Flow:**\n1. Register User\n2. Login\n3. View Stations\n4. View Trains\n5. View Routes\n6. Search Schedules\n7. Create Booking\n8. View Booking\n9. Create Payment\n10. View Payments\n11. Cancel Booking\n\n**Authentication:** JWT Bearer Token (auto-saved)\n\n**Environment Variables:**\n- gateway_url: http://localhost:8080\n- access_token: (auto-saved after login)\n- user_id: (auto-saved after register)\n- schedule_id: (manually set or auto-saved)\n- booking_id: (auto-saved after booking)\n- payment_id: (auto-saved after payment)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Authentication & User Management",
+			"item": [
+				{
+					"name": "1.1 Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data) {",
+									"        if (jsonData.data.accessToken) {",
+									"            pm.environment.set('access_token', jsonData.data.accessToken);",
+									"            console.log('✅ Access token saved');",
+									"        }",
+									"        if (jsonData.data.refreshToken) {",
+									"            pm.environment.set('refresh_token', jsonData.data.refreshToken);",
+									"        }",
+									"        if (jsonData.data.user && jsonData.data.user.id) {",
+									"            pm.environment.set('user_id', jsonData.data.user.id);",
+									"            console.log('✅ User ID saved: ' + jsonData.data.user.id);",
+									"        }",
+									"    }",
+									"}",
+									"",
+									"pm.test(\"Response has user data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('user');",
+									"    pm.expect(jsonData.data).to.have.property('accessToken');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser_{{$timestamp}}\",\n  \"password\": \"Password123!\",\n  \"email\": \"testuser{{$timestamp}}@example.com\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"phoneNumber\": \"+84912345678\",\n  \"dateOfBirth\": \"1995-05-15\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/auth/register",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register new user account. Auto-saves JWT token and user ID."
+					},
+					"response": []
+				},
+				{
+					"name": "1.2 Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.accessToken) {",
+									"        pm.environment.set('access_token', jsonData.data.accessToken);",
+									"        pm.environment.set('refresh_token', jsonData.data.refreshToken);",
+									"        console.log('✅ Tokens saved to environment');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"Password123!\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/auth/login",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login with existing credentials. Auto-saves JWT token."
+					},
+					"response": []
+				},
+				{
+					"name": "1.3 Get Current User Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has user profile data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('username');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/api/users/me",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"me"
+							]
+						},
+						"description": "Get current logged-in user profile. Requires JWT token."
+					},
+					"response": []
+				},
+				{
+					"name": "1.4 Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.accessToken) {",
+									"        pm.environment.set('access_token', jsonData.data.accessToken);",
+									"        console.log('✅ New access token saved');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/auth/refresh",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Refresh access token using refresh token."
+					},
+					"response": []
+				}
+			],
+			"description": "User registration, login, and profile management"
+		},
+		{
+			"name": "2. Train & Station Management",
+			"item": [
+				{
+					"name": "2.1 Get All Stations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});",
+									"",
+									"// Save first two station IDs for route search",
+									"if (pm.response.code === 200) {",
+									"    var stations = pm.response.json().data;",
+									"    if (stations && stations.length >= 2) {",
+									"        pm.environment.set('departure_station_id', stations[0].id);",
+									"        pm.environment.set('arrival_station_id', stations[1].id);",
+									"        console.log('✅ Station IDs saved for testing');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/api/stations",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"stations"
+							]
+						},
+						"description": "Get list of all train stations"
+					},
+					"response": []
+				},
+				{
+					"name": "2.2 Get All Trains",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/api/trains",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"trains"
+							]
+						},
+						"description": "Get list of all trains"
+					},
+					"response": []
+				},
+				{
+					"name": "2.3 Get All Routes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});",
+									"",
+									"// Save first route ID",
+									"if (pm.response.code === 200) {",
+									"    var routes = pm.response.json().data;",
+									"    if (routes && routes.length > 0) {",
+									"        pm.environment.set('route_id', routes[0].id);",
+									"        console.log('✅ Route ID saved: ' + routes[0].id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/api/routes",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"routes"
+							]
+						},
+						"description": "Get list of all train routes"
+					},
+					"response": []
+				}
+			],
+			"description": "Browse trains, stations, and routes"
+		},
+		{
+			"name": "3. Schedule Search & Selection",
+			"item": [
+				{
+					"name": "3.1 Search Schedules",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});",
+									"",
+									"// Save first schedule ID for booking",
+									"if (pm.response.code === 200) {",
+									"    var schedules = pm.response.json().data;",
+									"    if (schedules && schedules.length > 0) {",
+									"        pm.environment.set('schedule_id', schedules[0].id);",
+									"        console.log('✅ Schedule ID saved: ' + schedules[0].id);",
+									"        console.log('   Available seats: ' + schedules[0].availableSeats);",
+									"        console.log('   Price: ' + schedules[0].price);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/api/schedules/search?departureDate=2025-12-25",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"schedules",
+								"search"
+							],
+							"query": [
+								{
+									"key": "departureStationId",
+									"value": "{{departure_station_id}}",
+									"disabled": true
+								},
+								{
+									"key": "arrivalStationId",
+									"value": "{{arrival_station_id}}",
+									"disabled": true
+								},
+								{
+									"key": "departureDate",
+									"value": "2025-12-25"
+								}
+							]
+						},
+						"description": "Search for available train schedules. Auto-saves first schedule ID for booking."
+					},
+					"response": []
+				},
+				{
+					"name": "3.2 Get Schedule by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has schedule details\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('availableSeats');",
+									"    pm.expect(jsonData.data).to.have.property('price');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/api/schedules/{{schedule_id}}",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"schedules",
+								"{{schedule_id}}"
+							]
+						},
+						"description": "Get detailed information about a specific schedule"
+					},
+					"response": []
+				}
+			],
+			"description": "Search and view train schedules"
+		},
+		{
+			"name": "4. Booking Management",
+			"item": [
+				{
+					"name": "4.1 Create Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 201\", function () {",
+									"    pm.expect([200, 201]).to.include(pm.response.code);",
+									"});",
+									"",
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.id) {",
+									"        pm.environment.set('booking_id', jsonData.data.id);",
+									"        console.log('✅ Booking ID saved: ' + jsonData.data.id);",
+									"        console.log('   Status: ' + jsonData.data.status);",
+									"        console.log('   Total Price: ' + jsonData.data.totalPrice);",
+									"    }",
+									"}",
+									"",
+									"pm.test(\"Booking created successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('status');",
+									"    pm.expect(jsonData.data.status).to.equal('PENDING');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"scheduleId\": \"{{schedule_id}}\",\n  \"numberOfSeats\": 2,\n  \"passengers\": [\n    {\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"identityCard\": \"123456789\",\n      \"phoneNumber\": \"+84912345678\"\n    },\n    {\n      \"firstName\": \"Jane\",\n      \"lastName\": \"Doe\",\n      \"identityCard\": \"987654321\",\n      \"phoneNumber\": \"+84987654321\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/bookings",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"bookings"
+							]
+						},
+						"description": "Create a new booking. This triggers the Saga orchestration:\n1. Reserve seats in train service\n2. Create booking\n3. Initiate payment\n\nAuto-saves booking ID."
+					},
+					"response": []
+				},
+				{
+					"name": "4.2 Get Booking by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has booking details\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('status');",
+									"    pm.expect(jsonData.data).to.have.property('passengers');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/api/bookings/{{booking_id}}",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"{{booking_id}}"
+							]
+						},
+						"description": "Get booking details by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "4.3 Get My Bookings",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/api/bookings/my",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"my"
+							]
+						},
+						"description": "Get all bookings for current logged-in user"
+					},
+					"response": []
+				},
+				{
+					"name": "4.4 Cancel Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Booking cancelled\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.status).to.equal('CANCELLED');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/api/bookings/{{booking_id}}/cancel",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"{{booking_id}}",
+								"cancel"
+							]
+						},
+						"description": "Cancel a booking. This triggers compensation:\n1. Release seats\n2. Refund payment (if paid)\n3. Update booking status to CANCELLED"
+					},
+					"response": []
+				}
+			],
+			"description": "Create, view, and cancel bookings"
+		},
+		{
+			"name": "5. Payment Management",
+			"item": [
+				{
+					"name": "5.1 Create Payment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 201\", function () {",
+									"    pm.expect([200, 201]).to.include(pm.response.code);",
+									"});",
+									"",
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.id) {",
+									"        pm.environment.set('payment_id', jsonData.data.id);",
+									"        console.log('✅ Payment ID saved: ' + jsonData.data.id);",
+									"        console.log('   Status: ' + jsonData.data.status);",
+									"        console.log('   Amount: ' + jsonData.data.amount);",
+									"    }",
+									"}",
+									"",
+									"pm.test(\"Payment created\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('status');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bookingId\": \"{{booking_id}}\",\n  \"paymentMethod\": \"CREDIT_CARD\",\n  \"amount\": 500000\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/payments",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"payments"
+							]
+						},
+						"description": "Create payment for a booking. Payment methods: CREDIT_CARD, BANK_TRANSFER, E_WALLET"
+					},
+					"response": []
+				},
+				{
+					"name": "5.2 Get Payment by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has payment details\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('status');",
+									"    pm.expect(jsonData.data).to.have.property('amount');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/api/payments/{{payment_id}}",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"{{payment_id}}"
+							]
+						},
+						"description": "Get payment details by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "5.3 Get Payments by Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/api/payments/booking/{{booking_id}}",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"booking",
+								"{{booking_id}}"
+							]
+						},
+						"description": "Get all payments for a specific booking"
+					},
+					"response": []
+				}
+			],
+			"description": "Payment processing and management"
+		},
+		{
+			"name": "9. Health Checks & Monitoring",
+			"item": [
+				{
+					"name": "Gateway Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/actuator/health",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						},
+						"description": "Check API Gateway health status"
+					},
+					"response": []
+				},
+				{
+					"name": "Gateway Routes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/actuator/gateway/routes",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"actuator",
+								"gateway",
+								"routes"
+							]
+						},
+						"description": "View all configured Gateway routes"
+					},
+					"response": []
+				},
+				{
+					"name": "Eureka - All Services",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8761/eureka/apps",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8761",
+							"path": [
+								"eureka",
+								"apps"
+							]
+						},
+						"description": "View all registered services in Eureka"
+					},
+					"response": []
+				}
+			],
+			"description": "System health checks and monitoring endpoints"
+		}
+	],
+	"variable": [
+		{
+			"key": "gateway_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "schedule_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "booking_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "payment_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "departure_station_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "arrival_station_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "route_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

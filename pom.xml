@@ -39,6 +39,8 @@
         <module>services/user-service</module>
         <module>services/train-service</module>
         <module>services/payment-service</module>
+        <module>services/booking-service</module>
+        <module>services/notification-service</module>
     </modules>
 
     <!-- dependencyManagement: Quản lý version -->

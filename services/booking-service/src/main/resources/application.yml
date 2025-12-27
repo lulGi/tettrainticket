@@ -1,0 +1,123 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: booking-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/tettrainticket_booking?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: root
+    password: luong123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: >
+          bookingCreated:com.lul.booking.domain.booking.event.BookingCreatedEvent,
+          bookingConfirmed:com.lul.booking.domain.booking.event.BookingConfirmedEvent,
+          bookingCancelled:com.lul.booking.domain.booking.event.BookingCancelledEvent
+
+    consumer:
+      group-id: booking-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.use.type.headers: true
+        spring.json.type.mapping: >
+          com.lul.payment.domain.payment.event.PaymentCompletedEvent:com.lul.booking.infrastructure.kafka.event.PaymentCompletedEvent,
+          com.lul.payment.domain.payment.event.PaymentFailedEvent:com.lul.booking.infrastructure.kafka.event.PaymentFailedEvent,
+          PaymentCompletedEvent:com.lul.booking.infrastructure.kafka.event.PaymentCompletedEvent,
+          PaymentFailedEvent:com.lul.booking.infrastructure.kafka.event.PaymentFailedEvent
+        spring.json.trusted.packages: "*"
+      auto-offset-reset: earliest
+
+# Booking Expiry Configuration
+booking:
+  expiry:
+    minutes: 15
+  scheduler:
+    cron: "0 */5 * * * *"  # Run every 5 minutes
+
+# JWT Configuration (must match user-service)
+jwt:
+  secret: YourSuperSecretJwtKeyThatShouldBeAtLeast256BitsLongForHS512AlgorithmChangeThisInProduction
+  access-token-expiration: 3600000  # 1 hour in milliseconds
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+feign:
+  client:
+    config:
+      default:
+        connect-timeout: 5000
+        read-timeout: 10000
+        logger-level: FULL
+      train-service:
+        connect-timeout: 5000
+        read-timeout: 10000
+      payment-service:
+        connect-timeout: 5000
+        read-timeout: 15000
+
+  httpclient:
+    enabled: true
+    max-connections: 200
+    max-connections-per-route: 50
+
+  circuitbreaker:
+    enabled: true
+
+# Resilience4j Retry Configuration (match current WebClient retry)
+resilience4j:
+  retry:
+    instances:
+      trainService:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - feign.FeignException.ServiceUnavailable
+      paymentService:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - feign.FeignException.ServiceUnavailable
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.lul.booking: DEBUG
+    org.springframework.kafka: INFO

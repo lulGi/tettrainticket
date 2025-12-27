@@ -1,0 +1,683 @@
+{
+	"info": {
+		"_postman_id": "booking-service-collection-2025",
+		"name": "Booking Service API",
+		"description": "API collection for Booking Service - TET Train Ticket System\n\n**Features:**\n- Create booking (Saga orchestration)\n- View booking details\n- View user's bookings\n- Cancel booking (with compensation)\n\n**Authentication:** Bearer Token (JWT)\n\n**Base URL:** http://localhost:8083",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login (Get JWT Token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Auto-save JWT token to environment variable",
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.accessToken) {",
+									"        pm.environment.set(\"jwt_token\", jsonData.data.accessToken);",
+									"        pm.environment.set(\"refresh_token\", jsonData.data.refreshToken);",
+									"        console.log(\"JWT Token saved to environment\");",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login to User Service to get JWT token.\nToken will be automatically saved to environment variable."
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints to get JWT token from User Service"
+		},
+		{
+			"name": "Bookings",
+			"item": [
+				{
+					"name": "Create Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Save booking ID for later use",
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.id) {",
+									"        pm.environment.set(\"booking_id\", jsonData.data.id);",
+									"        console.log(\"Booking ID saved: \" + jsonData.data.id);",
+									"    }",
+									"}",
+									"",
+									"// Test assertions",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has booking data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('status');",
+									"    pm.expect(jsonData.data.status).to.equal('PENDING');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"scheduleId\": \"schedule-123\",\n  \"numberOfSeats\": 2,\n  \"paymentMethod\": \"CREDIT_CARD\",\n  \"passengers\": [\n    {\n      \"firstName\": \"Van A\",\n      \"lastName\": \"Nguyen\",\n      \"identityNumber\": \"123456789\",\n      \"phoneNumber\": \"0901234567\"\n    },\n    {\n      \"firstName\": \"Thi B\",\n      \"lastName\": \"Tran\",\n      \"identityNumber\": \"987654321\",\n      \"phoneNumber\": \"0907654321\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/bookings",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"bookings"
+							]
+						},
+						"description": "**Create a new booking (Saga Orchestration)**\n\n**Flow:**\n1. Reserve seats in train-service (with pessimistic lock)\n2. Create booking with PENDING status\n3. Create payment in payment-service\n4. Wait for payment event to confirm/cancel\n\n**Request Body:**\n- `scheduleId` (required): ID of the train schedule\n- `numberOfSeats` (required): 1-10 seats\n- `passengers` (required): List of passenger details\n- `paymentMethod` (optional): Payment method\n\n**Response:**\n- Booking with PENDING status\n- Expires after 15 minutes if payment not completed\n\n**Authentication:** Required (Bearer token)"
+					},
+					"response": [
+						{
+							"name": "Success - Booking Created",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"scheduleId\": \"schedule-123\",\n  \"numberOfSeats\": 2,\n  \"paymentMethod\": \"CREDIT_CARD\",\n  \"passengers\": [\n    {\n      \"fullName\": \"Nguyen Van A\",\n      \"identityNumber\": \"123456789\",\n      \"phoneNumber\": \"0901234567\"\n    },\n    {\n      \"fullName\": \"Tran Thi B\",\n      \"identityNumber\": \"987654321\",\n      \"phoneNumber\": \"0907654321\"\n    }\n  ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/bookings",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"bookings"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": true,\n  \"message\": \"Booking created successfully. Waiting for payment confirmation.\",\n  \"data\": {\n    \"id\": \"booking-789\",\n    \"userId\": \"user-456\",\n    \"scheduleId\": \"schedule-123\",\n    \"passengers\": [\n      {\n        \"fullName\": \"Nguyen Van A\",\n        \"identityNumber\": \"123456789\",\n        \"phoneNumber\": \"0901234567\"\n      },\n      {\n        \"fullName\": \"Tran Thi B\",\n        \"identityNumber\": \"987654321\",\n        \"phoneNumber\": \"0907654321\"\n      }\n    ],\n    \"numberOfSeats\": 2,\n    \"totalPrice\": 500000,\n    \"status\": \"PENDING\",\n    \"paymentId\": null,\n    \"cancellationReason\": null,\n    \"expiresAt\": \"2025-12-17T10:45:00\",\n    \"createdAt\": \"2025-12-17T10:30:00\",\n    \"updatedAt\": \"2025-12-17T10:30:00\"\n  },\n  \"timestamp\": \"2025-12-17T10:30:00\"\n}"
+						},
+						{
+							"name": "Error - Seat Not Available",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"scheduleId\": \"schedule-123\",\n  \"numberOfSeats\": 5,\n  \"paymentMethod\": \"CREDIT_CARD\",\n  \"passengers\": [...]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/bookings",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"bookings"
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": false,\n  \"message\": \"Not enough available seats. Available: 2\",\n  \"data\": null,\n  \"timestamp\": \"2025-12-17T10:30:00\"\n}"
+						},
+						{
+							"name": "Error - Validation Failed",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"scheduleId\": \"\",\n  \"numberOfSeats\": 0,\n  \"passengers\": []\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/bookings",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"bookings"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"data\": {\n    \"scheduleId\": \"Schedule ID is required\",\n    \"numberOfSeats\": \"Number of seats must be at least 1\",\n    \"passengers\": \"Passengers list cannot be empty\"\n  },\n  \"timestamp\": \"2025-12-17T10:30:00\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Booking By ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Booking has required fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('status');",
+									"    pm.expect(jsonData.data).to.have.property('passengers');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/bookings/{{booking_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"{{booking_id}}"
+							]
+						},
+						"description": "**Get booking details by ID**\n\n**Path Parameter:**\n- `id`: Booking ID\n\n**Response:**\n- Full booking details including passengers\n- Current status (PENDING, CONFIRMED, CANCELLED, EXPIRED)\n- Payment information if available\n\n**Authentication:** Required"
+					},
+					"response": [
+						{
+							"name": "Success - Booking Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/bookings/booking-789",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"bookings",
+										"booking-789"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": true,\n  \"message\": null,\n  \"data\": {\n    \"id\": \"booking-789\",\n    \"userId\": \"user-456\",\n    \"scheduleId\": \"schedule-123\",\n    \"passengers\": [\n      {\n        \"fullName\": \"Nguyen Van A\",\n        \"identityNumber\": \"123456789\",\n        \"phoneNumber\": \"0901234567\"\n      }\n    ],\n    \"numberOfSeats\": 1,\n    \"totalPrice\": 250000,\n    \"status\": \"CONFIRMED\",\n    \"paymentId\": \"payment-999\",\n    \"cancellationReason\": null,\n    \"expiresAt\": \"2025-12-17T10:45:00\",\n    \"createdAt\": \"2025-12-17T10:30:00\",\n    \"updatedAt\": \"2025-12-17T10:35:00\"\n  },\n  \"timestamp\": \"2025-12-17T11:00:00\"\n}"
+						},
+						{
+							"name": "Error - Booking Not Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/bookings/invalid-id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"bookings",
+										"invalid-id"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": false,\n  \"message\": \"Booking not found: invalid-id\",\n  \"data\": null,\n  \"timestamp\": \"2025-12-17T11:00:00\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get My Bookings",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/bookings/my-bookings",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"my-bookings"
+							]
+						},
+						"description": "**Get all bookings for the current authenticated user**\n\n**Response:**\n- List of all bookings for the current user\n- Sorted by creation date (newest first)\n- Includes all statuses: PENDING, CONFIRMED, CANCELLED, EXPIRED\n\n**Authentication:** Required (uses JWT to identify user)"
+					},
+					"response": [
+						{
+							"name": "Success - Multiple Bookings",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/bookings/my-bookings",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"bookings",
+										"my-bookings"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": true,\n  \"message\": null,\n  \"data\": [\n    {\n      \"id\": \"booking-789\",\n      \"userId\": \"user-456\",\n      \"scheduleId\": \"schedule-123\",\n      \"passengers\": [\n        {\n          \"fullName\": \"Nguyen Van A\",\n          \"identityNumber\": \"123456789\",\n          \"phoneNumber\": \"0901234567\"\n        }\n      ],\n      \"numberOfSeats\": 1,\n      \"totalPrice\": 250000,\n      \"status\": \"CONFIRMED\",\n      \"paymentId\": \"payment-999\",\n      \"cancellationReason\": null,\n      \"expiresAt\": \"2025-12-17T10:45:00\",\n      \"createdAt\": \"2025-12-17T10:30:00\",\n      \"updatedAt\": \"2025-12-17T10:35:00\"\n    },\n    {\n      \"id\": \"booking-790\",\n      \"userId\": \"user-456\",\n      \"scheduleId\": \"schedule-124\",\n      \"passengers\": [\n        {\n          \"fullName\": \"Nguyen Van A\",\n          \"identityNumber\": \"123456789\",\n          \"phoneNumber\": \"0901234567\"\n        },\n        {\n          \"fullName\": \"Tran Thi B\",\n          \"identityNumber\": \"987654321\",\n          \"phoneNumber\": \"0907654321\"\n        }\n      ],\n      \"numberOfSeats\": 2,\n      \"totalPrice\": 500000,\n      \"status\": \"PENDING\",\n      \"paymentId\": null,\n      \"cancellationReason\": null,\n      \"expiresAt\": \"2025-12-17T11:00:00\",\n      \"createdAt\": \"2025-12-17T10:45:00\",\n      \"updatedAt\": \"2025-12-17T10:45:00\"\n    },\n    {\n      \"id\": \"booking-788\",\n      \"userId\": \"user-456\",\n      \"scheduleId\": \"schedule-122\",\n      \"passengers\": [\n        {\n          \"fullName\": \"Nguyen Van A\",\n          \"identityNumber\": \"123456789\",\n          \"phoneNumber\": \"0901234567\"\n        }\n      ],\n      \"numberOfSeats\": 1,\n      \"totalPrice\": 300000,\n      \"status\": \"CANCELLED\",\n      \"paymentId\": null,\n      \"cancellationReason\": \"User requested cancellation\",\n      \"expiresAt\": \"2025-12-16T11:00:00\",\n      \"createdAt\": \"2025-12-16T10:45:00\",\n      \"updatedAt\": \"2025-12-16T10:50:00\"\n    }\n  ],\n  \"timestamp\": \"2025-12-17T11:00:00\"\n}"
+						},
+						{
+							"name": "Success - Empty List",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/bookings/my-bookings",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"bookings",
+										"my-bookings"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": true,\n  \"message\": null,\n  \"data\": [],\n  \"timestamp\": \"2025-12-17T11:00:00\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Cancel Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Cancellation successful\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.message).to.include('cancelled');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/bookings/{{booking_id}}/cancel?reason=Changed travel plans",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"{{booking_id}}",
+								"cancel"
+							],
+							"query": [
+								{
+									"key": "reason",
+									"value": "Changed travel plans",
+									"description": "Cancellation reason (optional)"
+								}
+							]
+						},
+						"description": "**Cancel a booking (Saga Compensation)**\n\n**Path Parameter:**\n- `id`: Booking ID to cancel\n\n**Query Parameter:**\n- `reason` (optional): Cancellation reason\n\n**Saga Compensation Flow:**\n1. Change booking status to CANCELLED\n2. Release seats in train-service\n3. Publish BookingCancelledEvent\n\n**Note:**\n- Cannot cancel CONFIRMED bookings (use refund instead)\n- Already cancelled bookings will be skipped (idempotent)\n- Seat release is compensated automatically\n\n**Authentication:** Required"
+					},
+					"response": [
+						{
+							"name": "Success - Booking Cancelled",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/bookings/booking-789/cancel?reason=Changed travel plans",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"bookings",
+										"booking-789",
+										"cancel"
+									],
+									"query": [
+										{
+											"key": "reason",
+											"value": "Changed travel plans"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": true,\n  \"message\": \"Booking cancelled successfully\",\n  \"data\": null,\n  \"timestamp\": \"2025-12-17T11:00:00\"\n}"
+						},
+						{
+							"name": "Error - Cannot Cancel Confirmed Booking",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/bookings/booking-789/cancel",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"bookings",
+										"booking-789",
+										"cancel"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": false,\n  \"message\": \"Cannot cancel confirmed booking. Please request refund instead.\",\n  \"data\": null,\n  \"timestamp\": \"2025-12-17T11:00:00\"\n}"
+						},
+						{
+							"name": "Error - Booking Not Found",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/bookings/invalid-id/cancel",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"bookings",
+										"invalid-id",
+										"cancel"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": false,\n  \"message\": \"Booking not found: invalid-id\",\n  \"data\": null,\n  \"timestamp\": \"2025-12-17T11:00:00\"\n}"
+						}
+					]
+				}
+			],
+			"description": "Booking management endpoints with Saga orchestration"
+		},
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/actuator/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						},
+						"description": "Check if Booking Service is running"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8084",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "booking_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

@@ -25,7 +25,18 @@ public enum ErrorCode {
 
     // Authorization errors (403 - Đã xác thực nhưng không có quyền)
     FORBIDDEN("FORBIDDEN", "Access forbidden", HttpStatus.FORBIDDEN),
-    ACCESS_DENIED("ACCESS_DENIED", "Access denied", HttpStatus.FORBIDDEN);
+    ACCESS_DENIED("ACCESS_DENIED", "Access denied", HttpStatus.FORBIDDEN),
+
+
+    INVALID_INPUT("INVALID_INPUT","Input invalid", HttpStatus.BAD_REQUEST ),
+
+    // Booking-specific errors
+    SEAT_NOT_AVAILABLE("SEAT_NOT_AVAILABLE", "Not enough seats available", HttpStatus.CONFLICT),
+    PAYMENT_CREATION_FAILED("PAYMENT_CREATION_FAILED", "Failed to create payment", HttpStatus.INTERNAL_SERVER_ERROR),
+    BOOKING_EXPIRED("BOOKING_EXPIRED", "Booking has expired", HttpStatus.GONE),
+    BOOKING_NOT_FOUND("BOOKING_NOT_FOUND", "Booking not found", HttpStatus.NOT_FOUND),
+    INVALID_STATE("INVALID_STATE", "Invalid state for this operation", HttpStatus.BAD_REQUEST),
+    EXTERNAL_SERVICE_ERROR("EXTERNAL_SERVICE_ERROR", "External service unavailable", HttpStatus.SERVICE_UNAVAILABLE);
 
     private final String code;
     private final String message;
