@@ -170,16 +170,15 @@ public class AuthenticationApplicationService {
      * Refresh access token using refresh token
      *
      * @param request Refresh token request
-     * @param userId  Current user's ID (from JWT)
      * @return TokenResponse with new access and refresh tokens
      */
     @Transactional
-    public TokenResponse refreshToken(RefreshTokenRequest request, String userId) {
-        log.info("Token refresh attempt for user: {}", userId);
+    public TokenResponse refreshToken(RefreshTokenRequest request) {
+        log.info("Token refresh attempt with refresh token");
 
-        // 1. Find credential by user profile ID
-        Credential credential = credentialRepository.findByUserProfileId(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CREDENTIAL_NOT_FOUND));
+        // 1. Find credential by refresh token
+        Credential credential = credentialRepository.findByRefreshToken(request.getRefreshToken())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN, "Invalid refresh token"));
 
         // 2. Validate and rotate refresh token (domain behavior)
         credential.validateAndRotateRefreshToken(request.getRefreshToken());
@@ -189,14 +188,14 @@ public class AuthenticationApplicationService {
 
         // 4. Generate new access token with roles
         String accessToken = jwtTokenProvider.generateAccessToken(
-                userId,
+                credential.getUserProfileId(),
                 credential.getUsername(),
                 credential.getRoles().stream()
                         .map(Enum::name)
                         .collect(Collectors.toSet())
         );
 
-        log.info("Token refreshed successfully for user: {}", userId);
+        log.info("Token refreshed successfully for user: {}", credential.getUserProfileId());
 
         return TokenResponse.builder()
                 .accessToken(accessToken)

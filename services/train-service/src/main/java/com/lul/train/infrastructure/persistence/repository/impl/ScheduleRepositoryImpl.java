@@ -34,9 +34,25 @@ public class ScheduleRepositoryImpl implements ScheduleRepository {
     }
 
     @Override
+    public List<Schedule> findAll() {
+        return jpaRepository.findAll()
+                .stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Optional<Schedule> findByIdWithLock(String id) {
         return jpaRepository.findByIdWithLock(id)
                 .map(mapper::toDomain);
+    }
+
+    @Override
+    public List<Schedule> findByRouteId(String routeId) {
+        return jpaRepository.findByRouteId(routeId)
+                .stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
     }
 
     @Override

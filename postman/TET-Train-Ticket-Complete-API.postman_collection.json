@@ -1,0 +1,1199 @@
+{
+	"info": {
+		"_postman_id": "tet-train-ticket-complete-api",
+		"name": "TET Train Ticket - Complete API (via Gateway)",
+		"description": "Complete API collection for TET Train Ticket System via API Gateway\n\n**Architecture:**\n- API Gateway: http://localhost:8080\n- All requests go through Gateway with `/api` prefix\n- JWT Authentication required for protected endpoints\n\n**Services:**\n- User Service (8081): Authentication & User Management\n- Train Service (8082): Station, Train, Route, Schedule\n- Payment Service (8083): Payment Processing\n- Booking Service (8084): Booking & Saga Orchestration\n\n**🎯 Complete Booking Flow (End-to-End):**\n1. **Login** → Get JWT token\n2. **Create Station/Train/Route/Schedule** → Prepare train data\n3. **Create Booking** → Saga starts: Reserve seats, create payment (PENDING)\n4. **Process Payment** → 70% success/30% fail\n   - ✅ SUCCESS → Booking CONFIRMED\n   - ❌ FAIL → Booking CANCELLED + Seats released\n5. **Check Booking Status** → Verify final state\n\n**Note:** Payment processing is in section 4. Payment Service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. User Service",
+			"item": [
+				{
+					"name": "Authentication",
+					"item": [
+						{
+							"name": "Register User",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    if (jsonData.data && jsonData.data.accessToken) {",
+											"        pm.collectionVariables.set('accessToken', jsonData.data.accessToken);",
+											"        pm.collectionVariables.set('refreshToken', jsonData.data.refreshToken);",
+											"        pm.collectionVariables.set('userId', jsonData.data.user.id);",
+											"        console.log('✅ Tokens and User ID saved');",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"username\": \"john_doe\",\n  \"password\": \"Password123\",\n  \"email\": \"john.doe@example.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+84912345678\",\n  \"dateOfBirth\": \"1990-01-15\"\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/auth/register",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "auth", "register"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    if (jsonData.data && jsonData.data.accessToken) {",
+											"        pm.collectionVariables.set('accessToken', jsonData.data.accessToken);",
+											"        pm.collectionVariables.set('refreshToken', jsonData.data.refreshToken);",
+											"        pm.collectionVariables.set('userId', jsonData.data.user.id);",
+											"        console.log('✅ Login successful - Tokens saved');",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"username\": \"john_doe\",\n  \"password\": \"Password123\"\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/auth/login",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "auth", "login"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Refresh Token",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/auth/refresh",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "auth", "refresh"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Change Password",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"currentPassword\": \"Password123\",\n  \"newPassword\": \"NewPassword456\"\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/auth/change-password",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "auth", "change-password"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Deactivate Account",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/auth/deactivate",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "auth", "deactivate"]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "User Profile",
+					"item": [
+						{
+							"name": "Get My Profile",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/users/me",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "users", "me"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update My Profile",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"phoneNumber\": \"+84987654321\",\n  \"dateOfBirth\": \"1990-01-15\"\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/users/me",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "users", "me"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get User By ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/users/{{userId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "users", "{{userId}}"]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "2. Train Service",
+			"item": [
+				{
+					"name": "Stations",
+					"item": [
+						{
+							"name": "Create Station",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('stationId', jsonData.data.id);",
+											"    console.log('✅ Station created: ' + jsonData.data.id);",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"stationCode\": \"HN\",\n  \"name\": \"Hà Nội Station\",\n  \"city\": \"Hà Nội\",\n  \"province\": \"Hà Nội\"\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/stations",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "stations"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get All Stations",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/stations",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "stations"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Station By ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/stations/{{stationId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "stations", "{{stationId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Station",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Hà Nội Station (Updated)\",\n  \"city\": \"Hà Nội\",\n  \"province\": \"Hà Nội\"\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/stations/{{stationId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "stations", "{{stationId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Station",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/stations/{{stationId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "stations", "{{stationId}}"]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Trains",
+					"item": [
+						{
+							"name": "Create Train",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('trainId', jsonData.id);",
+											"    console.log('✅ Train created: ' + jsonData.id);",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"trainNumber\": \"SE1\",\n  \"trainName\": \"Thống Nhất Express\",\n  \"trainType\": \"EXPRESS\",\n  \"totalSeats\": 500\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/trains",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "trains"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get All Trains",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/trains",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "trains"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Train By ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/trains/{{trainId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "trains", "{{trainId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Train By Number",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/trains/number/SE1",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "trains", "number", "SE1"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Train",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"trainName\": \"Thống Nhất Express (Updated)\",\n  \"trainType\": \"HIGH_SPEED\",\n  \"totalSeats\": 600\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/trains/{{trainId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "trains", "{{trainId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Train",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/trains/{{trainId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "trains", "{{trainId}}"]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Routes",
+					"item": [
+						{
+							"name": "Create Route",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('routeId', jsonData.id);",
+											"    console.log('✅ Route created: ' + jsonData.id);",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"routeCode\": \"HN-SG\",\n  \"originStationId\": \"{{stationId}}\",\n  \"destinationStationId\": \"destination-station-id\",\n  \"distance\": 1726,\n  \"estimatedDuration\": 1800\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/routes",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "routes"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get All Routes",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/routes",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "routes"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Route By ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/routes/{{routeId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "routes", "{{routeId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Route By Code",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/routes/code/HN-SG",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "routes", "code", "HN-SG"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Routes By Origin",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/routes/origin/{{stationId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "routes", "origin", "{{stationId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Routes By Destination",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/routes/destination/{{stationId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "routes", "destination", "{{stationId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Route",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"distance\": 1730,\n  \"estimatedDuration\": 1740\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/routes/{{routeId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "routes", "{{routeId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Route",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/routes/{{routeId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "routes", "{{routeId}}"]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Schedules",
+					"item": [
+						{
+							"name": "Create Schedule",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('scheduleId', jsonData.id);",
+											"    console.log('✅ Schedule created: ' + jsonData.id);",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"trainId\": \"{{trainId}}\",\n  \"routeId\": \"{{routeId}}\",\n  \"departureTime\": \"2025-01-20T08:00:00\",\n  \"arrivalTime\": \"2025-01-20T18:00:00\",\n  \"availableSeats\": 500,\n  \"price\": 500000\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/schedules",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "schedules"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Schedule By ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/schedules/{{scheduleId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "schedules", "{{scheduleId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search Schedules",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/schedules/search?routeId={{routeId}}&startTime=2025-01-20T00:00:00&endTime=2025-01-21T00:00:00",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "schedules", "search"],
+									"query": [
+										{
+											"key": "routeId",
+											"value": "{{routeId}}"
+										},
+										{
+											"key": "startTime",
+											"value": "2025-01-20T00:00:00"
+										},
+										{
+											"key": "endTime",
+											"value": "2025-01-21T00:00:00"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Activate Schedule",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/schedules/{{scheduleId}}/activate",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "schedules", "{{scheduleId}}", "activate"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Cancel Schedule",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/schedules/{{scheduleId}}/cancel",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "schedules", "{{scheduleId}}", "cancel"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Schedule",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"departureTime\": \"2025-01-20T09:00:00\",\n  \"arrivalTime\": \"2025-01-20T19:00:00\",\n  \"availableSeats\": 480,\n  \"price\": 550000\n}"
+								},
+								"url": {
+									"raw": "{{gatewayUrl}}/api/schedules/{{scheduleId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "schedules", "{{scheduleId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Schedule",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{gatewayUrl}}/api/schedules/{{scheduleId}}",
+									"host": ["{{gatewayUrl}}"],
+									"path": ["api", "schedules", "{{scheduleId}}"]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "3. Booking Service",
+			"item": [
+				{
+					"name": "Create Booking (Start Saga)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('bookingId', jsonData.data.id);",
+									"    pm.collectionVariables.set('paymentId', jsonData.data.paymentId);",
+									"    console.log('✅ Booking created: ' + jsonData.data.id);",
+									"    console.log('💳 Payment ID: ' + jsonData.data.paymentId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"scheduleId\": \"{{scheduleId}}\",\n  \"numberOfSeats\": 2,\n  \"paymentMethod\": \"CREDIT_CARD\",\n  \"passengers\": [\n    {\n      \"firstName\": \"Van A\",\n      \"lastName\": \"Nguyen\",\n      \"identityNumber\": \"123456789\",\n      \"phoneNumber\": \"0901234567\"\n    },\n    {\n      \"firstName\": \"Thi B\",\n      \"lastName\": \"Tran\",\n      \"identityNumber\": \"987654321\",\n      \"phoneNumber\": \"0907654321\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{gatewayUrl}}/api/bookings",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["api", "bookings"]
+						},
+						"description": "Saga Step 1: Reserve seats, create booking (PENDING), create payment"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Booking By ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gatewayUrl}}/api/bookings/{{bookingId}}",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["api", "bookings", "{{bookingId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Bookings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gatewayUrl}}/api/bookings/my-bookings",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["api", "bookings", "my-bookings"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Booking (Compensation)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{gatewayUrl}}/api/bookings/{{bookingId}}/cancel?reason=User cancelled",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["api", "bookings", "{{bookingId}}", "cancel"],
+							"query": [
+								{
+									"key": "reason",
+									"value": "User cancelled"
+								}
+							]
+						},
+						"description": "Saga Compensation: Cancel booking, release seats"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Payment Service",
+			"item": [
+				{
+					"name": "1. Create Payment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('paymentId', jsonData.data.id);",
+									"    console.log('💳 Payment ID saved: ' + jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"amount\": 500000,\n  \"paymentMethod\": \"CREDIT_CARD\"\n}"
+						},
+						"url": {
+							"raw": "{{gatewayUrl}}/api/payments",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["api", "payments"]
+						},
+						"description": "Create a new payment with PENDING status.\n\nPayment Methods:\n- CREDIT_CARD\n- DEBIT_CARD\n- E_WALLET\n- BANK_TRANSFER"
+					},
+					"response": []
+				},
+				{
+					"name": "2. Process Payment (Simulate Gateway)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    var status = jsonData.data.status;",
+									"    console.log('💳 Payment Status: ' + status);",
+									"    if (status === 'COMPLETED') {",
+									"        console.log('✅ Transaction ID: ' + jsonData.data.transactionId);",
+									"    } else if (status === 'FAILED') {",
+									"        console.log('❌ Failure Reason: ' + jsonData.data.failureReason);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{gatewayUrl}}/api/payments/{{paymentId}}/process",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["api", "payments", "{{paymentId}}", "process"]
+						},
+						"description": "Process payment through simulated payment gateway.\n\nSuccess Rate: 70% COMPLETED, 30% FAILED\n\nPublishes event to Kafka:\n- PaymentCompletedEvent (if success)\n- PaymentFailedEvent (if failed)"
+					},
+					"response": []
+				},
+				{
+					"name": "3. Refund Payment (Saga Compensation)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{gatewayUrl}}/api/payments/{{paymentId}}/refund?reason=Customer cancelled booking",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["api", "payments", "{{paymentId}}", "refund"],
+							"query": [
+								{
+									"key": "reason",
+									"value": "Customer cancelled booking"
+								}
+							]
+						},
+						"description": "Refund a COMPLETED payment (Saga compensation).\n\nValidation:\n- Only COMPLETED payments can be refunded\n- Reason is required\n\nPublishes PaymentRefundedEvent to Kafka"
+					},
+					"response": []
+				},
+				{
+					"name": "4. Get Payment by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gatewayUrl}}/api/payments/{{paymentId}}",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["api", "payments", "{{paymentId}}"]
+						},
+						"description": "Retrieve payment details by payment ID"
+					},
+					"response": []
+				},
+				{
+					"name": "5. Get Payment by Booking ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gatewayUrl}}/api/payments/booking/{{bookingId}}",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["api", "payments", "booking", "{{bookingId}}"]
+						},
+						"description": "Retrieve payment by booking ID"
+					},
+					"response": []
+				},
+				{
+					"name": "6. Create Payment - E_WALLET",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('paymentId2', jsonData.data.id);",
+									"    console.log('💳 Payment ID 2 saved: ' + jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bookingId\": \"booking-test-002\",\n  \"amount\": 750000,\n  \"paymentMethod\": \"E_WALLET\"\n}"
+						},
+						"url": {
+							"raw": "{{gatewayUrl}}/api/payments",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["api", "payments"]
+						},
+						"description": "Create payment with E_WALLET method"
+					},
+					"response": []
+				},
+				{
+					"name": "7. Create Payment - BANK_TRANSFER",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bookingId\": \"booking-test-003\",\n  \"amount\": 1200000,\n  \"paymentMethod\": \"BANK_TRANSFER\"\n}"
+						},
+						"url": {
+							"raw": "{{gatewayUrl}}/api/payments",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["api", "payments"]
+						},
+						"description": "Create payment with BANK_TRANSFER method"
+					},
+					"response": []
+				},
+				{
+					"name": "8. Test - Refund FAILED Payment (Should Fail)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{gatewayUrl}}/api/payments/{{paymentId}}/refund?reason=Test validation",
+							"host": ["{{gatewayUrl}}"],
+							"path": ["api", "payments", "{{paymentId}}", "refund"],
+							"query": [
+								{
+									"key": "reason",
+									"value": "Test validation"
+								}
+							]
+						},
+						"description": "Test validation - Should return error if payment is not COMPLETED.\n\nExpected: 400 Bad Request\nMessage: Cannot refund payment. Only COMPLETED payments can be refunded"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "gatewayUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "stationId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "trainId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "routeId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "scheduleId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "bookingId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "paymentId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

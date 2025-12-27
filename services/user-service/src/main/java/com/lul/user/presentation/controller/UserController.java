@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
  * REST Controller for user profile endpoints.
  */
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
 

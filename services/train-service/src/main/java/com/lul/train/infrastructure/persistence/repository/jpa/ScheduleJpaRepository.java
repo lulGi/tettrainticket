@@ -22,6 +22,8 @@ public interface ScheduleJpaRepository extends JpaRepository<ScheduleEntity, Str
     @Query("SELECT s FROM ScheduleEntity s WHERE s.id = :id")
     Optional<ScheduleEntity> findByIdWithLock(@Param("id") String id);
 
+    List<ScheduleEntity> findByRouteId(String routeId);
+
     List<ScheduleEntity> findByRouteIdAndDepartureTimeBetween(
             String routeId,
             LocalDateTime startTime,

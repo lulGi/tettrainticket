@@ -18,6 +18,8 @@ public interface CredentialRepository {
 
     Optional<Credential> findByUserProfileId(String userProfileId);
 
+    Optional<Credential> findByRefreshToken(String refreshToken);
+
     boolean existsByUsername(String username);
 
     void deleteById(String id);

@@ -25,11 +25,12 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final CustomJwtDecoder customJwtDecoder;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     private static final String[] PUBLIC_ENDPOINTS = {
-            "/api/auth/register",
-            "/api/auth/login",
-            "/api/auth/refresh"
+            "/auth/register",
+            "/auth/login",
+            "/auth/refresh"
     };
 
     @Bean
@@ -48,7 +49,7 @@ public class SecurityConfig {
                                 .decoder(customJwtDecoder)
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
                         )
-                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
         );
 
         // 3. Disable CSRF (stateless JWT)

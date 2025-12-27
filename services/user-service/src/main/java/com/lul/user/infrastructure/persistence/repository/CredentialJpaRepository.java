@@ -12,5 +12,7 @@ public interface CredentialJpaRepository extends JpaRepository<CredentialEntity,
 
     Optional<CredentialEntity> findByUserProfileId(String userProfileId);
 
+    Optional<CredentialEntity> findByRefreshToken(String refreshToken);
+
     boolean existsByUsername(String username);
 }

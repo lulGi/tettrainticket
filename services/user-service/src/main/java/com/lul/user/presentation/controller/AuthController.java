@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  * REST Controller for authentication endpoints.
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -55,11 +55,9 @@ public class AuthController {
      */
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<TokenResponse>> refresh(
-            @Valid @RequestBody RefreshTokenRequest request,
-            Authentication authentication) {
+            @Valid @RequestBody RefreshTokenRequest request) {
 
-        String userId = authentication.getName(); // Subject from JWT
-        TokenResponse response = authService.refreshToken(request, userId);
+        TokenResponse response = authService.refreshToken(request);
         return ResponseEntity.ok(
                 ApiResponse.success(response, "Token refreshed successfully"));
     }

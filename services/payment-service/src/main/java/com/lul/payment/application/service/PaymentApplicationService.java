@@ -59,7 +59,7 @@ public class PaymentApplicationService {
                         "Payment not found with ID: " + paymentId));
 
         // Simulate payment gateway (60% success, 40% fail)
-        boolean success = random.nextInt(100) < 60;
+        boolean success = true;
 
         PaymentEvent event;
         if (success) {

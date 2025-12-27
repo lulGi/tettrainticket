@@ -16,12 +16,16 @@ public interface ScheduleRepository {
 
     Optional<Schedule> findById(String id);
 
+    List<Schedule> findAll();
+
     /**
      * Find schedule by ID with pessimistic lock
      * CRITICAL: This method MUST acquire database-level lock (SELECT FOR UPDATE)
      * Used for reserve/release operations to prevent race conditions
      */
     Optional<Schedule> findByIdWithLock(String id);
+
+    List<Schedule> findByRouteId(String routeId);
 
     List<Schedule> findByRouteIdAndDepartureTimeBetween(
             String routeId,

@@ -1,6 +1,7 @@
 package com.lul.payment.domain.payment.event;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,7 +9,12 @@ import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "@type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = PaymentCompletedEvent.class, name = "paymentCompleted"),
+        @JsonSubTypes.Type(value = PaymentFailedEvent.class, name = "paymentFailed"),
+        @JsonSubTypes.Type(value = PaymentRefundedEvent.class, name = "paymentRefunded")
+})
 public abstract class PaymentEvent {
 
     private String paymentId;

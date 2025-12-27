@@ -111,7 +111,7 @@ public class ScheduleApplicationService {
     }
 
     /**
-     * Find schedules by route and departure time range
+     * Find schedules by route and time range (all parameters optional)
      */
     @Transactional(readOnly = true)
     public List<ScheduleDTO> findSchedulesByRouteAndTime(
@@ -121,9 +121,26 @@ public class ScheduleApplicationService {
     ) {
         log.info("Finding schedules for route: {} between {} and {}", routeId, startTime, endTime);
 
-        List<Schedule> schedules = scheduleRepository.findByRouteIdAndDepartureTimeBetween(
-                routeId, startTime, endTime
-        );
+        List<Schedule> schedules;
+        
+        // If all parameters are null, return all schedules
+        if (routeId == null && startTime == null && endTime == null) {
+            schedules = scheduleRepository.findAll();
+        } 
+        // If only routeId is provided
+        else if (routeId != null && startTime == null && endTime == null) {
+            schedules = scheduleRepository.findByRouteId(routeId);
+        }
+        // If routeId and time range are provided
+        else if (routeId != null && startTime != null && endTime != null) {
+            schedules = scheduleRepository.findByRouteIdAndDepartureTimeBetween(
+                    routeId, startTime, endTime
+            );
+        }
+        // Other combinations - return empty list or implement as needed
+        else {
+            schedules = scheduleRepository.findAll();
+        }
 
         return schedules.stream()
                 .map(dtoMapper::toDTO)

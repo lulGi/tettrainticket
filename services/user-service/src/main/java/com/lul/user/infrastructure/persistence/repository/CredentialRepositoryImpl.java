@@ -47,6 +47,12 @@ public class CredentialRepositoryImpl implements CredentialRepository {
     }
 
     @Override
+    public Optional<Credential> findByRefreshToken(String refreshToken) {
+        return jpaRepository.findByRefreshToken(refreshToken)
+            .map(mapper::toDomain);
+    }
+
+    @Override
     public boolean existsByUsername(String username) {
         return jpaRepository.existsByUsername(username);
     }

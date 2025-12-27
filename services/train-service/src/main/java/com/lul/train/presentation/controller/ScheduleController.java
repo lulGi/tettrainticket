@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/schedules")
+@RequestMapping("/schedules")
 @RequiredArgsConstructor
 public class ScheduleController {
 
@@ -67,13 +67,14 @@ public class ScheduleController {
 
     /**
      * Search schedules by route and time range
-     * GET /api/schedules/search?routeId=xxx&startTime=xxx&endTime=xxx
+     * GET /schedules/search?routeId=xxx&startTime=xxx&endTime=xxx
+     * All parameters are optional
      */
     @GetMapping("/search")
     public ResponseEntity<List<ScheduleDTO>> searchSchedules(
-            @RequestParam String routeId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime
+            @RequestParam(required = false) String routeId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime
     ) {
         List<ScheduleDTO> schedules = scheduleService.findSchedulesByRouteAndTime(routeId, startTime, endTime);
         return ResponseEntity.ok(schedules);

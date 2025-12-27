@@ -1,0 +1,59 @@
+spring:
+  application:
+    name: notification-service
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    consumer:
+      group-id: notification-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.lul.notification.infrastructure.kafka.event.BookingCreatedEvent
+        spring.json.type.mapping: >
+          bookingCreated:com.lul.notification.infrastructure.kafka.event.BookingCreatedEvent,
+          bookingConfirmed:com.lul.notification.infrastructure.kafka.event.BookingConfirmedEvent,
+          bookingCancelled:com.lul.notification.infrastructure.kafka.event.BookingCancelledEvent,
+          paymentCompleted:com.lul.notification.infrastructure.kafka.event.PaymentCompletedEvent,
+          paymentFailed:com.lul.notification.infrastructure.kafka.event.PaymentFailedEvent
+        spring.json.trusted.packages: "*"
+      auto-offset-reset: earliest
+
+server:
+  port: 8085
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+# Notification Configuration (mock settings)
+notification:
+  email:
+    enabled: true
+    mock: true
+  sms:
+    enabled: true
+    mock: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.lul.notification: INFO
+    org.springframework.kafka: INFO

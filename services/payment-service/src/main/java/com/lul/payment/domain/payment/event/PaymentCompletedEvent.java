@@ -1,19 +1,22 @@
 package com.lul.payment.domain.payment.event;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
 @Getter
-public class PaymentCompletedEvent extends PaymentEvent{
+@Setter
+@NoArgsConstructor
+public class PaymentCompletedEvent extends PaymentEvent {
 
-    private final BigDecimal amount;
-    private final String transactionId;
+    private BigDecimal amount;
+    private String transactionId;
 
     public PaymentCompletedEvent(String paymentId, String bookingId, BigDecimal amount, String transactionId) {
-        super(paymentId,bookingId);
-        this.amount=amount;
-        this.transactionId= transactionId;
+        super(paymentId, bookingId);
+        this.amount = amount;
+        this.transactionId = transactionId;
     }
-
 }
